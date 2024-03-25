@@ -1,0 +1,74 @@
+Id. usuario del trabajo: ac274
+Id. del trabajo: 137852
+Nombre del trabajo especificado por usuario: sp-OpenMP-script11.sh
+Directorio de trabajo (en el que se ejecuta el script): /home/ac274/bp1
+Cola: ac
+Nodo que ejecuta este trabajo: 
+Nº de nodos asignados al trabajo: 1
+Nodos asignados al trabajo: atcgrid1
+CPUs por nodo: 
+Ejecucuon de SumaVectores_Global, con for paralelizado y sections
+
+Ejecutando con for con 8288608 componentes
+Tamaño Vectores:8288608 (4 B)
+Tiempo:0.015966739	 / Tamaño Vectores:8288608	/ V1[0]+V2[0]=V3[0](828860.800000+828860.800000=1657721.600000) / / V1[8288607]+V2[8288607]=V3[8288607](1657721.500000+0.100000=1657721.600000) /
+
+real	0m0.135s
+user	0m0.559s
+sys	0m0.300s
+
+Ejecutando secuancial, sin paralelismo, con 8288608 componentes
+Tamaño Vectores:8288608 (4 B)
+Tiempo:0.033917765	 / Tamaño Vectores:8288608	/ V1[0]+V2[0]=V3[0](828860.800000+828860.800000=1657721.600000) / / V1[8288607]+V2[8288607]=V3[8288607](1657721.500000+0.100000=1657721.600000) /
+
+real	0m0.144s
+user	0m0.051s
+sys	0m0.035s
+
+Ejecutando con for con 16577216 componentes
+Tamaño Vectores:16577216 (4 B)
+Tiempo:0.029416483	 / Tamaño Vectores:16577216	/ V1[0]+V2[0]=V3[0](1657721.600000+1657721.600000=3315443.200000) / / V1[16577215]+V2[16577215]=V3[16577215](3315443.100000+0.100000=3315443.200000) /
+
+real	0m0.092s
+user	0m1.104s
+sys	0m0.473s
+
+Ejecutando secuancial, sin paralelismo, con 16577216 componentes
+Tamaño Vectores:16577216 (4 B)
+Tiempo:0.064054875	 / Tamaño Vectores:16577216	/ V1[0]+V2[0]=V3[0](1657721.600000+1657721.600000=3315443.200000) / / V1[16577215]+V2[16577215]=V3[16577215](3315443.100000+0.100000=3315443.200000) /
+
+real	0m0.177s
+user	0m0.075s
+sys	0m0.080s
+
+Ejecutando con for con 33154432 componentes
+Tamaño Vectores:33154432 (4 B)
+Tiempo:0.056843454	 / Tamaño Vectores:33154432	/ V1[0]+V2[0]=V3[0](3315443.200000+3315443.200000=6630886.400000) / / V1[33154431]+V2[33154431]=V3[33154431](6630886.300000+0.100000=6630886.400000) /
+
+real	0m0.157s
+user	0m2.103s
+sys	0m0.861s
+
+Ejecutando secuancial, sin paralelismo, con 33154432 componentes
+Tamaño Vectores:33154432 (4 B)
+Tiempo:0.125805059	 / Tamaño Vectores:33154432	/ V1[0]+V2[0]=V3[0](3315443.200000+3315443.200000=6630886.400000) / / V1[33154431]+V2[33154431]=V3[33154431](6630886.300000+0.100000=6630886.400000) /
+
+real	0m0.335s
+user	0m0.154s
+sys	0m0.150s
+
+Ejecutando con for con 66308864 componentes
+Tamaño Vectores:66308864 (4 B)
+Tiempo:0.058330334	 / Tamaño Vectores:33554432	/ V1[0]+V2[0]=V3[0](3355443.200000+3355443.200000=6710886.400000) / / V1[33554431]+V2[33554431]=V3[33554431](6710886.300000+0.100000=6710886.400000) /
+
+real	0m0.159s
+user	0m2.148s
+sys	0m0.972s
+
+Ejecutando secuancial, sin paralelismo, con 66308864 componentes
+Tamaño Vectores:66308864 (4 B)
+Tiempo:0.126740865	 / Tamaño Vectores:33554432	/ V1[0]+V2[0]=V3[0](3355443.200000+3355443.200000=6710886.400000) / / V1[33554431]+V2[33554431]=V3[33554431](6710886.300000+0.100000=6710886.400000) /
+
+real	0m0.327s
+user	0m0.148s
+sys	0m0.156s

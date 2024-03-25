@@ -1,0 +1,427 @@
+
+------------------------------------------------------------------------------------------------------------------
+Torres Ramos, Juan Luis
+------------------------------------------------------------------------------------------------------------------
+USUARIO
+
+ac274
+gft5ztsgca
+
+------------------------------------------------------------------------------------------------------------------
+INICIO ACCESO ATCGRID4
+
+ * Para ejecutar comandos (srun,sbatch,squeue...), con un cliente ssh (secure shell)
+ 	shh -X username@atcgrid.ugr.es
+ 
+ * Para cargar y descargar ficheros (puts hello, get slurm-9.out, ...) con un cliente sftp (secure fie transfer protocol)
+	sftp username@ugr.es 
+
+******************************************************************************************************************
+SEMINARIO 0
+
+1º Crea carpeta en atcgrid 
+	-> mkdir bp0
+
+	slurm -> gestod de coleas en la practica
+	atcgrid -> cluster de practicas
+	cluster -> sistemas disptribuidos de granjas de computadores unidos entre si por una red, es como un unico servidor
+	
+socket: donde se pone la cpu, la cajita esa, slot de la cpu
+
+Cluster se compone de 4 nodos  atcgrid 1,2,3,4
+
+	atcgrid[1-3] -- placa madre
+	     	     -- chip de procesamiento : *6 cores hyperthreading 2,4GHZ (12 threads)
+
+	atcgrid 4 - placa madre (tiene otra distinta al resto)
+		  - 16 cores hyperthreading 2.1 GHZ  
+
+COMANDOS EJEMPLOS
+
+- srun : envia a ejecutar un trabajo (hello y lscpu) a traves de una columna slurm
+	-p : se envia a nodos de la cola especificada con -p
+
+- sbathc : envia a ejecutar un script a traves de una columna slurm, la salida devuelve un fichero, 
+	   srun es lo mismo pero interactivo, se recomienda sbatch
+
+- squeue : muestra todos los trabajos ejecucion
+
+- scancel : elimina un trabajo segun identificador
+
+- sinfo : da informacion del nodo especiicado
+
+*	Slurm está configurado para asignar recursos a los rocesos (llamados tasks en slurm) a nivel de core fisico
+	(ESTO SIGNIFICA que por defecto slurm asigna un core a un proceso, para asignar x se debe usar con sbatch/
+	srun la opcion --cpus-per-task=x o -cx)
+	
+	Para asegurar que solo se crea un proceso hay que incluis --nstask=1 (-n1) en sbatch/run
+	
+*	En slurm, por defecto, cpu se refiere a cores lógicos (ej. en la opcion -c) si no se quiere usar cores 
+	lógicos hay que añadirla opcion 
+		--hint=nomultithread a batch/srun
+	
+* 	Para que no se ejecute más de un proceso en un nodo de cómputo de atcgrip hay que usar
+		--exlusive 
+
+
+------------------------------------------------------------------------------------------------------------------
+EJERCICIO 1:
+	Ejecuta lscpu en el PC, en atcgrid4 (usar en esta caso -p ac4) y en uno de los restantes nodos de cluster
+	(atcgrid1,atcgrid2,atcgrid3 usar en este caso -p ac)
+	
+PC: lscpu
+ATCGRID 4: srun -p ac4 lscpu
+ATCGRID [1-3]: srun -p ac lscpu
+
+core fisicos = sockets * core/sockets
+core logico = core fisico * threads/core
+
+------------------------------------------------------------------------------------------------------------------
+EJERCICIO 2:
+	Compila y ejecuta en el PC el codigo HelloOMP.c
+
+gcc  -O2 -fopenmp -o HelloOMP HelloOMP.C
+
+se imprime "hello world" como tantos cores logicos tenga el PC
+
+------------------------------------------------------------------------------------------------------------------
+EJERCICIO 3:
+	Compila el ejecutable HelloOMP.c que ha generado anteriormente y que se encuentre en el directorio ejer2
+	del PC al directorio ejer2 de su home en el front-end de atcgrid
+	Ejecuta este codigo en un nodo de cómputo de atcgrid (de 1 a 3) a traves de cola ac del gestor de las colas
+	utilizando directamente la linea de comandos sin ningun script
+
+	Subir archivos:
+		-> sftp tuusuario@atcgrid.es
+		haces put del archivo que quieras subir -> puts ejer2/HelloOMP.c
+		
+	a)
+	srun --partition=ac --account=ac --ntasks=1 --cpus-per-task=12 --hint=nomultithread HelloOMP
+	srun -pac -Aac -n1 -c12
+	
+	-pac : seleccione el atcgrid 1
+	-Aac: account : ac
+	-n1: --stask numero de procesos creo 1 solo proceso
+	-c12: cpus per task : nº ejecuciones / por defecto 1 core a un proceso
+	--hint=nomultithread = no uso los cores logicos
+	
+	b) ahora con -c24 ejecuto 24 procesos : 24 hellos
+	
+	c) 
+	con sinfo veo cual es el acgrid predeterminado -> es el ac, la que se esta utilizando
+	
+	d) nos pide que usemos todos los cores fisicos de atcgrid4
+	   sabemos que tiene un total de 32 cores fisico, por lo que  ejecutamos
+	   srun -pac4 --cpus-per-task=32 -hint=nomultithread HelloOMP
+	   
+	   si ejecutamos -cpus-per-task=33 ya nos da error
+
+------------------------------------------------------------------------------------------------------------------
+EJERCICIO 4:
+	Modificar HelloOMP.C para que imprima "world" en un printf distinto al usado para "Hello" con su 
+	identificador -> HelloOMP.c
+	
+	usa el script dentro del frotn-end del atcgrid -> genera un archivo slurm -> sbatch script_hellomp.sh
+	
+	en el script añado
+	printf("(%d:!!!Hello)", omp_get_thread_num());
+	printf("(%d:world!!!)", omp_get_thread_num());
+	
+	luego para ejecutarlo dentro del front-ed:
+	
+	sbatch script_heloomp.sh
+		-> se jenera un slurm.out que le tendremos que hacer un ct para ver el resultado
+	
+	si haces cat al scipt puedes ver toda la info que te proporfiona el programa
+	SLURM_JOB_NODELIST : es una variable de entorno del sitema de colas que muestra los nodos asignados al 
+			     trabajo
+	
+	arriba del script se muestra la info de las ordenes para el gestos de colas
+	para cambiar a atcgrid 4 -> --partition=ac4
+
+------------------------------------------------------------------------------------------------------------------
+EJERCICIO 5:
+	Genera en el PC el ejecutanle del codigo fuente C SumaVectores.c para vectores locales -> compilalo primero
+	descomente definicion de VECTOR_LOCAL y comenta las definiciones de VECTOR_GLOBAL y VECTOR_DYNAMIC
+
+	compilas com gcc -02 SumaVectores.c -o SumaVectores
+	./SumaVectores 10
+	descomentas #defina VECTOR_LOCAL
+------------------------------------------------------------------------------------------------------------------
+EJERCICIO 6:
+	En el codigo Suma Vectores.c se utiliza la funcion clock_gettime para el tiempo de ejecucion del trozo de codigo
+	que calcula la suma de vectores
+	
+	a.El codigo se imprime la variable ncgt
+	
+	ncgt -> contiene el tiempo en seg tarda 2 vectores en sumarse, se basa en la definicion de tiempo real 
+		Tiempo = tv_sec + (tv_nsec/10⁹)
+	b. la info que devuelve clock_gettime() es una estructura de datos struct timespec
+	
+	struc timespec ->time_t ty_sec // segundos
+		       -> long ty_nsec // nanosegundos
+		       
+		       long poara indicar el numero de nanosegnos
+		       time_t para el numero de segundos
+	
+	c. la funcion clock_gettime toma el tiempo actual del reloj especificado por clock_id y lo guarda en el 
+	buffer apuntado por tp
+	devuelve un int 0 exito o -1 error
+------------------------------------------------------------------------------------------------------------------
+EJERCICIO 7: Rellena la tabla con los tiempo de ejecucion que te proporciona sumadevectores
+
+	rrelenar dicha tabla con la funcion y con los valores dados
+		       
+------------------------------------------------------------------------------------------------------------------
+EJERCICIO 2: 	
+
+	a. En el uso de vectores locales, se produce un segmentation fault cuando el tamaño de los vectores
+	supera el tamaño de la pila -> es decir cuando supera 2^19 componentes, esto se ve con ulimit -a
+	
+	b. Cunado usamos vectores globales, esta no esta limitada por el tamaño de la pila del programa.
+	Eso si, si se especifica que el tamaño es de 2^26 componentes se redondea a 2^25
+	
+	c. COn vectores dinamicos no hay error
+	
+------------------------------------------------------------------------------------------------------------------
+EJERCICIO 3: 
+	a.Cual es el maximo valor que se puede almacenar en la variable N teniendo en cuenta su tipo?
+	vemos que es unsigned int de 4 B-> 4*8 =32 bits se puede representar hasta 2^32-1
+	
+	b.He modificado la linea de codigo → #define MAX 4294967295 // 2³² -1
+	EL error lo da el enlazador, que es el que se encarga de las dependencias de las variables globales
+	El puntero RX86_64_PC32 sirve para direccionar 32B , funciones globales a algunas direcciones de memoria, 	
+	y si tuviesemos que direccionar mas de 32 b no podriamos
+	
+	
+******************************************************************************************************************
+SEMINARIO 1
+EJERCICIOS BASADOS EN LOS EJEMPLOS DEL SEMINARIO PRACTICO
+
+------------------------------------------------------------------------------------------------------------------
+EJERCICIO 1: 
+	Usa la directva parallel combinada con directiva de trabajo compartido en los ejemplos buble.for.c y sections
+	del seminario. 
+
+En blucle for combinamos -> #pragma omp parallel sections
+corchetes son para separar los pragmas, podemos unirlos
+Directivas parallel y de trabajo compartido combinadas
+
+export -> fija para
+export OMP_DYNAMIC_FALSE -> evitar asignacion dinamica de las hebras, cuanta hebra se asigna al proceso, fuerza que use toda las hebras
+	cuando no se el numero de hebras lo pongo a true
+			    
+export OMP_NUM_THREADS 12 -> en el prallel -> 12 hebras establezco el numero de hebras
+		por defecto -> 1
+
+
+#pragma omp for: directiva for-> los thread imprimen las iteraciones que ejecuta , los divide para cada uno, hebra x iteracion
+#pragma omp sections: directiva sections -> separa las tareas, un thread ejecuta una seccion y el otro la otra seccion
+ 
+ 
+ ------------------------------------------------------------------------------------------------------------------
+EJERCICIO 2:
+
+#pragma omp single: directiva single -> queremos hacer una parte codigo que lo haga una hebra 
+ 
+ quito la ultima parte, lo englobo en el parallel y luego le hago un #pragma omp single ------------------------------------------------------------------------------------------------------------------
+EJERCICIO 3:
+	Introduce los resultados del programa single.c usando usando la directiva master en el pararel en vez de fuera
+	Cuales son las diferencias entre el 2 y el 3 entre el usar single y el master
+	
+#pragma omp master -> no tiene barreras implicitas, no es una directiva de trabajo compartido
+
+La diferencia con respecto a la ejecucion del ejercicio 2 es que el thread que imprime los resultados de la 
+ejecucion del programa dentro de la construccion parallel es el thread master, es decir la hebra numero 0 
+Esto no influye sobre los resultados del programa
+
+------------------------------------------------------------------------------------------------------------------
+EJERCICIO 4:
+	
+	Se suman las componentes paralelizando las thread las sumas, la suma total es la suma de las sumas parciales y se
+	actualiza la variable global compartida para ello se tiene que asegurar que se accede a ella de forma ordenada con
+	critica,l en el ejemplo se usa atomic que es lo mismo. Como con parallel for hay barrera implícita pues entonces
+	cuando se calcule la suma total se sabe que se ha realizado bien.
+	Pero en el ejemplo de master.c se quiere hacer dentro del codigo que paraleliza entonces como atomic no tiene bar -
+	rera implícita entonces tenemos que usar barrier para saber que se respeta la seccion crítica y asegurarnos de que
+	suma tiene sumado todos los valores de las sumas locales. De no poner barrier la sección critica se va a respetar
+	pero se puede mostrar por pantalla el valor de la suma total faltando por sumar algunas sumas parciales.
+------------------------------------------------------------------------------------------------------------------
+EJERCICIO 5:
+	Programa secuencial en C del Listado 1 que calcula la suma de dos vectores 
+	Genrere el ejecutable del programa del Listado 1 para vectores globales
+	Usa time (Leccion3/Tema 1) en la línea de comandos , en el atcgrid el tiempo de ejecucion y el Tcpu de l
+	usuario y del sistema generado
+	Obtenga los tiempos para vectores con 10^7 componentes 
+	¿La suma de los tiempos de CPU del usuario y del sistema es menos, mayor o igual que el tiemp real?
+	(elapsed)
+	
+	time srun SumaVectoresC_global 10000000	
+	
+	La suma de los tiempos de CPU del usuario y del sistema es menor que el tiempo real porque el tiempo que 
+	falta es el asociado a las esperas debidas a E/S o asociadas a la ejecucion de otros programas
+	
+	real = 0m0.220s (aqui se añaden ademas las esperas del sistema)
+	user = 0m0.008s y sys = 0m005s
+	
+------------------------------------------------------------------------------------------------------------------
+EJERCICIO 6:
+Genere el codigo ensamblador del vectores globales
+	se genera el código ensamblador tieme que compilar usamdo -s en lugar de -o 
+	Obten los MIPS y los MFLOPS del código que obtiene la suma de vectores
+	Calculo para 10 y 10000000
+	
+	MPIS = NI / (Tcpu + 10⁶)
+	MFLOPS = nºFP/Tcpu+10⁶ 
+	
+	Codigo ensamblador -> gcc -O2 -S SumaVectores.c -lrt (la S en mayuscula)
+	
+	Todo lo que hay entre 2 llamadas a clock_gettime es la suma ademas que aparece la etiqueta del bucle (L6)
+	
+	Consultando un manual del codigo ensamblador observamos que las operaciones en coma flotandte son movsd y adds 
+	movsd   v1(,%rax,8), %xmm0   // (3)
+        addsd   v2(,%rax,8), %xmm0
+        movsd   %xmm0, v3(,%rax,8)
+	
+	N(10 o 10000000)
+	Antes -> hay 1
+	Luego bucle hay 2
+	3 instrucciones
+	bucle -> 6 instrucciones * N
+	movsd   v1(,%rax,8), %xmm0
+        addsd   v2(,%rax,8), %xmm0
+        movsd   %xmm0, v3(,%rax,8)
+        addq    $1, %rax
+        cmpl    %eax, %ebp
+        ja      .L6
+	
+	hay 3 operaciones en coma flotante
+	
+	NI = 3+6*N
+	nFP = 3*N
+	
+	el bucle se comprende desde salto .L6 hasta el rpincipio de este -> movsd. Por lo tanto tendremos que 
+	multiplicar por 6 el numero de componentes . Le sumamos 3 a la expresion ya que hay 3 instrucciones fuera
+	del bucle y entre clock_gettime
+	
+	Para 10 componentes
+		NI = 6*10 + 3 = 63 	
+		nFP = 3*10
+		Tiempo (Tcpu):0.000404725 
+		
+		MIPS = 63/(0.000404725*10⁶)= 0.155661 MIPS (porque divido por 10⁶, si fuese por 10⁹ seria GMIPS/GFLOPS
+		MFLOPS = 30/ (0.000404725*10⁶)= 0.0741244 MFLOPS
+		
+	Para 10000000
+		NI = 6*10000000 + 3 = 60000003
+		nFP = 3*10000000 = 30000000
+		Tiempo = 0.041432411 
+	
+		MIPS = 60000003/(0.041432411*10⁶)= 1448.141722 MIPS
+		MFLOPS = 30000000/ (0.041432411*10⁶)= 724.11445 MFLOPS
+
+------------------------------------------------------------------------------------------------------------------
+EJERCICIO 7:
+	Iplementa un programa en C con OpenMP a partir del codigo del listado 1 que calcule en paralelo la suma 
+	de 2 vectores usando directicas parallel y for
+	- paraleliza la iniciallizacion de os 2 vectores
+	-obten el tiempo del calculo de la suma con omp_get_wtime() en vez de clock_gettime()
+	- name: sp-OpenMP-for
+	
+	N -> numero de componentes 
+	inicializa los vectores antes del calculo
+	asegura que la suma de vectores se haga bien imprimiendo
+	
+	Mdifico SumaVectores para que paralelice la suma
+
+------------------------------------------------------------------------------------------------------------------
+EJERCICIO 8:
+	Implemente un program en C con OpenMp a partir del codigo del listado 1 (SumaVectores en global) que 
+	calucle en paralelo la suma de dos vectores usando parallel, sections/section (en vez de usar for)
+	
+	- Hay que repartir el trabajo entre vario threads usando sections 
+	- Paraleliza tmb las tareas asociadas a la inicializacion de los vectores
+	- Para obtener el tiempo usa la funcion omp_get_wtime() (Devuelve double) en vez de clock_get time
+	- name: sp-OpenMP-section
+	- los resutados deben ser igual al del codigo sin parametrizar
+	
+	
+	Directiva bucle: #pragma omp for [clause] // distribuye las iteraciones de un bucle entre las threads (paralelismo de datos)
+				for-loop
+	
+	Directiva sections: #pragma omp sections	#pragma omp section // separa las tareas en bloques
+		
+	Directiva single: #pragma omp single // para que uno de los threads ejecute un trozo de codigo secuencial
+	
+	Compilar: gcc -O2 -fopenmp sp-OpenMP-sections-c -o sp-OpenMP-sections -lrt
+	RECUERDA HACER -FOPENMP Y #INCLUDE <OMP.H>
+	
+	-lrt: real time library
+	
+	Basicamente lo que hecho es dividir el vector en 3 partes iguales, una que va de 0 a n/3, otra de n/3 a 
+	2*n/3 y una ultima seccion de 2*n/3 a n tanto para la inicializacion como para la suma, lo de dentro se 
+	queda igual.
+	#pragma omp parallel sections private(i)
+	#pragma omp parallel
+	#pragma omp sections private(i)
+	
+	private, cada hebra de las de dentro, i,  se convierte en privada, asi no se jode el trabajo
+
+------------------------------------------------------------------------------------------------------------------
+EJERCICIO 9:
+
+	En el ejercicio 7, usando las directivas for y parallel, el reparto de trabajo entre threads va según las iteraciones del bucle, es decir se reparte de forma dinámica, depende del valor de OMP_NUM_THREADS, podríamos usar cuantos quisiésemos siendo este inferior al numero de cores de la maquina, en mi caso en mi portatil, el máximo son 8 hebras. Por otro lado, con parallel y section, aquí la asignación de hebras no es dinámicas, como mucho se van a usar 3 en mi caso, por que uso 3 section, es decir 3 bloques.
+
+******************************************************************************************************************
+SEMINARIO 2
+EJERCICIOS BASADOS EN LOS EJEMPLOS DEL SEMINARIO PRACTICO
+
+------------------------------------------------------------------------------------------------------------------
+EJERCICIO 1:
+Añade la clausula default(none) a la directiva parallel del ejemplo de shared clause.c
+- que pasa , por que, resuelve el problema generado sin elimnar default(none)
+
+* Con la clausula default (none|shared)
+	- none: el programador debe especificar el alcance de todas las variables usadas en la construcción
+	- solo puede haber una
+* clausula shared
+	- se comparten las variables especificadas entre parentesis por todos los threads
+
+------------------------------------------------------------------------------------------------------------------
+EJERCICIO 2:
+	Añade lo necesario a private.clause.c para que imprima fuera de la region parallel
+	Inicializa detro de parallel a un valor distinto de 0
+	Ejecuta varias veces el codigo
+	Razona 
+	Modifica el codigo para que se inicialize suma fuera del parallel en lugar de dentro
+	Explica que ocurre
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+
+	
